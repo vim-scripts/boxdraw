@@ -5,28 +5,36 @@
 " 2002-01-09 -- (00:42) fixed col(".") bug (note vim bug k"tylj does not retu)
 " 2002-01-09 -- optimize
 " 2002-01-10 -- double boxes
+" 2002-01-16 -- use script-local var and access function instead of global
+" 2002-01-30 -- ,a mapping (box->ascii conversion)
 
 
-let s:o='--0251--001459--50585a----------0202----0c1c----525e------------51--51--53--5f--54--60------------------------------------------00185c--003468------------------1024----2c3c--------------------56--62--65--6b--------------------------------------------------505b5d----------506769----------5561------------646a------------57--63----------66--6c------------------------------------------------------------------01'
-let s:i='44cc11------------------14------50------05------41------15--------------51--------------54--------------45--------------55--------------------------------------88221824289060a009060a81428219262a9162a29864a889468a9966aa14504105------40010410'
+let s:o_utf8='--0251--001459--50585a----------0202----0c1c----525e------------51--51--53--5f--54--60------------------------------------------00185c--003468------------------1024----2c3c--------------------56--62--65--6b--------------------------------------------------505b5d----------506769----------5561------------646a------------57--63----------66--6c------------------------------------------------------------------01'
+let s:i_utf8='44cc11------------------14------50------05------41------15--------------51--------------54--------------45--------------55--------------------------------------88221824289060a009060a81428219262a9162a29864a889468a9966aa14504105------40010410'
 
 "
 " Activate mode. Assigned to ,b macro.
 "
 fu! <SID>S()
-  se enc=utf8
+  if has("gui_running")
+    se enc=utf8
+  en
   let s:ve=&ve
-  se ve=all
+  setl ve=all
   nm <S-Up> :call <SID>M(1,'k')<CR>
   nm <S-Down> :call <SID>M(16,'j')<CR>
   nm <S-Left> :call <SID>M(64,'h')<CR>
   nm <S-Right> :call <SID>M(4,'l')<CR>
   nm ,e :call <SID>E()<CR>
-  nm ,s :let g:bdlt=1<CR>
-  nm ,d :let g:bdlt=2<CR>
-  let g:bdlt=1
+  nm ,s :call <SID>SetLT(1)<CR>
+  nm ,d :call <SID>SetLT(2)<CR>
+  let s:bdlt=1
   nm ,b x
   nun ,b
+endf
+
+fu! s:SetLT(thickness)
+  let s:bdlt=a:thickness
 endf
 
 " Deactivate mode.
@@ -50,7 +58,7 @@ fu! s:T(c,d,m)
     exe 'norm mt'.a:d.'"tyl`t'
     if(0xE2==char2nr(@t[0])&&0x25==char2nr(@t[1])/4)
       let u=char2nr(@t[1])%4*64+char2nr(@t[2])%64
-      let c='0x'.strpart(s:i,2*u,2)
+      let c='0x'.strpart(s:i_utf8,2*u,2)
       "echo 'd='.a:d.' m='.a:m.' c='.c.' u='.u
       retu c%a:m*4/a:m 
     en
@@ -64,18 +72,31 @@ fu! <SID>M(s,d)
   let t=@t
   let x=s:T(1<col("."),'h',16)*64+s:T(line(".")<line("$"),'j',4)*16+s:T(1,'l',256)*4+s:T(1<line("."),'k',64)
   let @t=t
-  let c=a:s*g:bdlt+x-x%(a:s*4)/a:s*a:s
+  let c=a:s*s:bdlt+x-x%(a:s*4)/a:s*a:s
   "echo 'need c='.c.' x='.x
-  let o=strpart(s:o,2*c,2)
+  let o=strpart(s:o_utf8,2*c,2)
   if o!='--' && o!='' 
     exe "norm r\<C-V>u25".o.a:d
   en
 "  "echo "Boxdrawing mode"
 endf
 
+fu! s:ToAscii()
+  echo "Hello"
+  exe "normal :s/[<C-V>u2500]/-/g"
+" normal gv:s/[<C-V>u2550]/-/g<CR>
+" normal gv:s/[<C-V>u2502<C-V>u2551]/<bar>g<CR>
+" normal gv:s/[<C-V>u250c<C-V>u252c<C-V>u2510<C-V>u251c<C-V>u253c<C-V>u2524<C-V>u2514<C-V>u2534<C-V>u2518]/+/g<CR>
+" normal gv:s/[<C-V>u2554<C-V>u2566<C-V>u2557<C-V>u2560<C-V>u256c<C-V>u2563<C-V>u255a<C-V>u2569<C-V>u255d]/#/g<CR>
+" normal gv:s/[<C-V>u2552<C-V>u2564<C-V>u2555<C-V>u255e<C-V>u256a<C-V>u2561<C-V>u2558<C-V>u2567<C-V>u255b<C-V>u2553<C-V>u2565<C-V>u2556<C-V>u255f<C-V>u256b<C-V>u2562<C-V>u2559<C-V>u2568<C-V>u255c]/+/g<CR>
+endf
+
+vmap ,a :call <SID>ToAscii()<CR>
+
 " Upon start activate boxdrwaing mode.
 " If undesirable, prepend with :nmap ,b
 "
 :call <SID>S()
+
 
 

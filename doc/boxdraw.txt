@@ -1,32 +1,58 @@
 Summary
 -------
-Draw diagrams and tables using "real box drawing characters" (AKA ANSI art).
+Draw diagrams and tables using "real box drawing characters" (AKA ANSI
+art).
 
 Detailed description
 --------------------
-This scripts facilitates drawing simple 'ANSI' graphic containing box drawing
-characters (not just '+', '-' and '|', but REAL box drawing characters).
-It can be useful to draw diagrams and fancy tables (at least, I use it this
-way).
+These scripts facilitate drawing simple 'ANSI' graphic containing box
+drawing characters (not just '+', '-' and '|', but REAL box drawing
+characters).  It can be useful to draw diagrams and fancy tables (at
+least, I use it this way).
 
 Upon sourcing script defines several macros:
 
-<shift-arrow> -- moves cursor in specified direction leaving trail of box
-drawing characters, making all joins and crossings
-,e -- ends box drawing mode (unmap shift+arrows macros and restore virtualedit
-value)
-,b -- restarts box drawing (map shift+arrows macros and set virtual edit=all)
+<shift-arrow> -- moves cursor in specified direction leaving trail of
+box drawing characters, making all joins and crossings
+,e -- ends box drawing mode (unmap shift+arrows macros and restore
+virtualedit value)
+,b -- restarts box drawing (map shift+arrows macros and set virtual
+      edit=all)
 ,s -- selects 'single-line' boxdrawing characters
 ,d -- selects 'double-line' boxdrawing characters
+,a -- convert all characters in selection into ascii '+', '-', '|' (utf8
+      only)
 
-Currently box drawing is supported only in utf8 mode. However, script does not
-use any "weird" box drawing characters from unicode set that are not present
-in, say, cp437. So, it is safe to save it in any single byte encoding that
-contains regular single box drawing characters.
+Currently box drawing is supported separately for utf8 encoding and
+single byte encoding.
+Mappings for utf8 are located in boxdraw.vim
+Mappings for single-byte encoding are located in bd-single.vim
+
+Script for utf-8 (boxdraw.vim) does not use any "weird" box drawing
+characters from unicode set that are not present in, say, cp437. So, it
+is safe to save utf-8 file in any single byte encoding that contains
+regular single box drawing characters.
+This script also contains mapping that converts all boxdrawing
+characters in current selection into ascii '+', '-', '|'.
+
+Script for single-byte encodings (bd-single) assumes that boxdrawing
+characters are located in the same places as in cp437 (cp866, .... etc.)
+codepage. If you want to use it with encoding that contains such
+characters in diferent place, please drop me a note -- I will be happy
+to add support for that codepage too.
 
 Plans:
-I plan to support also single byte encoding directly and I also plan to 
-support double boxes in a cleaner way.
+------
+I plan to merge these 2 scripts and add backward conversion
+(ascii->boxdrawing).
+I also plan to support double boxes in a cleaner way.
+
+Examples
+--------
+keyboard.txt -- picture of russian keyboard layout (utf8)
+keyboard-utf16le.txt -- same in utf16le encoding (notepad ready)
+resistor-network.txt -- sample schema (utf8)
+vetka.txt
 
 Installation
 ------------
@@ -38,8 +64,17 @@ You may wish also to add this to your menu by adding a line to your .gvimrc
 (_gvimrc) file (use actual path to boxdraw.vim):
 :menu Tools.Bo&x\ Draw :so ~/.vim/boxdraw.vim<CR>
 
+I run Windows and use boxdraw.vim in gvim (it supports utf-8 very
+nicely) and bd-single in vim (its support of utf-8 is kind of unclear
+for me).
+
+Author
+------
+Andrew Nikitin <andrewnikitin@yahoo.com>
+
 History
 -------
 2002-01-09 -- v0.0 -- initial upload, single boxes in utf-8 encoding
 2002-01-10 -- v0.1 -- double boxes
+2002-01-30 -- v0.2 -- single-byte, box->ascii conversion
 
