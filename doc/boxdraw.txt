@@ -10,7 +10,7 @@ drawing characters (not just '+', '-' and '|', but REAL box drawing
 characters).  It can be useful to draw diagrams and fancy tables (at
 least, I use it this way).
 
-Upon sourcing script defines several macros:
+Upon sourcing the script defines several macros:
 
 <shift-arrow> -- moves cursor in specified direction leaving trail of
 box drawing characters, making all joins and crossings
@@ -21,12 +21,19 @@ virtualedit value)
 ,s -- selects 'single-line' boxdrawing characters
 ,d -- selects 'double-line' boxdrawing characters
 ,a -- convert all characters in selection into ascii '+', '-', '|' (utf8
-      only)
+      only, not implemented)
+
+When rectangular block is selected, it can be moved around using
+<shift-arrow> keys. Unfortunately, as of version 6.1 multibyte
+characters and rectangular blocks do not live together too good, so this
+feature is experimental.
 
 Currently box drawing is supported separately for utf8 encoding and
 single byte encoding.
 Mappings for utf8 are located in boxdraw.vim
 Mappings for single-byte encoding are located in bd-single.vim
+I haven't run it for several years, since I use this script exclusively
+in utf8 mode.
 
 Script for utf-8 (boxdraw.vim) does not use any "weird" box drawing
 characters from unicode set that are not present in, say, cp437. So, it
@@ -41,15 +48,40 @@ codepage. If you want to use it with encoding that contains such
 characters in diferent place, please drop me a note -- I will be happy
 to add support for that codepage too.
 
+Perl scripts
+------------
+
+Some box-drawing related procedures are more naturally done with
+external scripts. These scripts take ascii standard input and produce
+utf8 encoded standard output.
+
+border.pl -- converts regular '+-|'-style drawing into single-line utf8
+  boxdrawing. This script has does not just blindly replace characters,
+  but instead looks to the neighbourhood and chooses boxdrawinf
+  character that fits best. Use this script as a filter to convert
+  existing ascii drawings.
+
+outline.pl -- outlines groups of similar characters in the input with
+  boxdrawing characters. option -d makes output twice as wide,
+  For example,
+                                    ┌───┬─┐     ┌───────┬───┐
+  aaaacc   will be converted into   │┌─┬┘┌┘ or  │ ┌───┬─┘ ┌─┘
+  abbcc                             ├┴┐└┐│      ├─┴─┐ └─┐ │
+  ccbbc                             │ └┐├┘      │   └─┐ ├─┘
+  cccb                              └──┴┘       └─────┴─┘
+
+Both scripts were tested with ActivePerl 5.6.1.
+
 Plans:
 ------
-I plan to merge these 2 scripts and add backward conversion
-(ascii->boxdrawing).
-I also plan to support double boxes in a cleaner way.
+* Merge utf8 and single byte scripts
+* Support double boxes in a cleaner way.
+* Finally make ,a work.
+* Trace path on a diagram.
 
 Examples
 --------
-keyboard.txt -- picture of russian keyboard layout (utf8)
+keyboard.txt -- picture of cyrillic keyboard layout (utf8)
 keyboard-utf16le.txt -- same in utf16le encoding (notepad ready)
 resistor-network.txt -- sample schema (utf8)
 vetka.txt
@@ -64,17 +96,34 @@ You may wish also to add this to your menu by adding a line to your .gvimrc
 (_gvimrc) file (use actual path to boxdraw.vim):
 :menu Tools.Bo&x\ Draw :so ~/.vim/boxdraw.vim<CR>
 
+Environment
+-----------
 I run Windows and use boxdraw.vim in gvim (it supports utf-8 very
 nicely) and bd-single in vim (its support of utf-8 is kind of unclear
-for me).
+for me). Both major Windows monospaced fonts (Courier New and Lucida
+Console) support wide range of Unicode characters, including box
+drawing.
+
+Why use box drawing characters?
+-------------------------------
+These characters are in Unicode standard for compatibility with wide
+range of existing 8-bit encodings that have them. The wording of Unicode
+standard discourages usage of such characters, other than for the
+purpose of converting between encodigns and storage of legacy data.
+Having said all that I found that sometimes a picture, even crude and
+primitive, is worth pages of explanations. Just about the only way to
+include picture in source code is to use ascii or "ansi" art. Ascii is
+more compatible, but "ansi" looks way better. Since I have to use
+Unicode to include cyrillic characters in comments anyway, I decided to
+stop on "ansi" art as a format of choice for in-source drawings.
 
 Author
 ------
-Andrew Nikitin <andrewnikitin@yahoo.com>
+Andrew Nikitin <nsg21@hotmail.com>
 
 History
 -------
 2002-01-09 -- v0.0 -- initial upload, single boxes in utf-8 encoding
 2002-01-10 -- v0.1 -- double boxes
 2002-01-30 -- v0.2 -- single-byte, box->ascii conversion
-
+2003-11-24 -- v0.3 -- perl scripts + some rectangular block movements
