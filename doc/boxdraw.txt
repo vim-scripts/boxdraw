@@ -12,8 +12,12 @@ least, I use it this way).
 
 Upon sourcing the script defines several macros:
 
-<shift-arrow> -- moves cursor in specified direction leaving trail of
-box drawing characters, making all joins and crossings
+<shift+arrow> -- moves cursor in specified direction leaving trail of
+box drawing characters, making all joins and crossings.
+g+<arrow> -- follow line of boxdrawing characters until it reaches
+intersection or ends.
+<shift+arrow> in visual mode -- move selected rectangular block in
+specified direction.
 ,e -- ends box drawing mode (unmap shift+arrows macros and restore
 virtualedit value)
 ,b -- restarts box drawing (map shift+arrows macros and set virtual
@@ -28,12 +32,9 @@ When rectangular block is selected, it can be moved around using
 characters and rectangular blocks do not live together too good, so this
 feature is experimental.
 
-Currently box drawing is supported separately for utf8 encoding and
-single byte encoding.
-Mappings for utf8 are located in boxdraw.vim
-Mappings for single-byte encoding are located in bd-single.vim
-I haven't run it for several years, since I use this script exclusively
-in utf8 mode.
+Currently box drawing is supported for utf8 encoding.
+There is version for single-byte encoding (located in bd-single.vim)
+but it hasn't been updated for several years.
 
 Script for utf-8 (boxdraw.vim) does not use any "weird" box drawing
 characters from unicode set that are not present in, say, cp437. So, it
@@ -55,14 +56,18 @@ Some box-drawing related procedures are more naturally done with
 external scripts. These scripts take ascii standard input and produce
 utf8 encoded standard output.
 
-border.pl -- converts regular '+-|'-style drawing into single-line utf8
+bdua2b.pl -- converts regular '+-|'-style drawing into single-line utf8
   boxdrawing. This script has does not just blindly replace characters,
-  but instead looks to the neighbourhood and chooses boxdrawinf
+  but instead looks to the neighbourhood and chooses boxdrawing
   character that fits best. Use this script as a filter to convert
   existing ascii drawings.
+  Option -ss selects single border characters, -sd -- double border,
+  -sh -- single vertical double horizontal, -sv single horizontal double
+  vertical.
 
 outline.pl -- outlines groups of similar characters in the input with
-  boxdrawing characters. option -d makes output twice as wide,
+  boxdrawing characters. Option -d makes output twice as wide, options
+  -s* select boxdrawing flavor as in previous script.
   For example,
                                     ┌───┬─┐     ┌───────┬───┐
   aaaacc   will be converted into   │┌─┬┘┌┘ or  │ ┌───┬─┘ ┌─┘
@@ -74,10 +79,8 @@ Both scripts were tested with ActivePerl 5.6.1.
 
 Plans:
 ------
-* Merge utf8 and single byte scripts
 * Support double boxes in a cleaner way.
-* Finally make ,a work.
-* Trace path on a diagram.
+* Merge utf8 and single byte scripts
 
 Examples
 --------
@@ -127,3 +130,4 @@ History
 2002-01-10 -- v0.1 -- double boxes
 2002-01-30 -- v0.2 -- single-byte, box->ascii conversion
 2003-11-24 -- v0.3 -- perl scripts + some rectangular block movements
+2004-06-18 -- v0.4 -- following the lines, updated perl scripts

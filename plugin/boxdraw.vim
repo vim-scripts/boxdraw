@@ -8,6 +8,7 @@
 " 2002-01-16 -- use script-local var and access function instead of global
 " 2002-01-30 -- ,a mapping (box->ascii conversion)
 " 2003-11-10 -- implemented MB avoiding "number Ctl-V"
+" 2004-06-18 -- fixed ToAscii so it replaces "─"; trace path (g+arrow)
 
 
 let s:o_utf8='--0251--001459--50585a----------0202----0c1c----525e------------51--51--53--5f--54--60------------------------------------------00185c--003468------------------1024----2c3c--------------------56--62--65--6b--------------------------------------------------505b5d----------506769----------5561------------646a------------57--63----------66--6c------------------------------------------------------------------01'
@@ -26,6 +27,10 @@ fu! <SID>S()
   nm <S-Down> :call <SID>M(16,'j')<CR>
   nm <S-Left> :call <SID>M(64,'h')<CR>
   nm <S-Right> :call <SID>M(4,'l')<CR>
+  nm g<Up> :call <SID>G(0)<CR>
+  nm g<Right> :call <SID>G(1)<CR>
+  nm g<Down> :call <SID>G(2)<CR>
+  nm g<Left> :call <SID>G(3)<CR>
   vm <S-Up>     <esc>:call <SID>MB('k')<CR>
   vm <S-Down>   <esc>:call <SID>MB('j')<CR>
   vm <S-Left>   <esc>:call <SID>MB('h')<CR>
@@ -49,6 +54,10 @@ fu! <SID>E()
   nun <S-Down>
   nun <S-Left>
   nun <S-Right>
+  nun g<Up>
+  nun g<Right>
+  nun g<Down>
+  nun g<Left>
   vu <S-Up>
   vu <S-Down>
   vu <S-Left>
@@ -56,22 +65,84 @@ fu! <SID>E()
   nun ,e
   nm ,b :call <SID>S()<CR>
   let &ve=s:ve
+  unlet s:ve
   "echo "Finished Boxdrawing mode"
 endf
 
-" Try neihgbour in direction 'd' id c is true. Mask m for the direction
+" Try neihgbour in direction 'd' if c is true. Mask m for the direction
 " should also be supplied.
 " Function returns neighboring bit
+" Unicode entries are encoded in utf8 as
+"   7 bit : 0vvvvvvv
+"  11 bit : 110vvvvv 10vvvvvv
+"  16 bit : 1110vvvv 10vvvvvv 10vvvvvv
 fu! s:T(c,d,m)
   if(a:c)
     exe 'norm mt'.a:d.'"tyl`t'
+    " check if symbol from unicode boxdrawing range
+    " E2=1110(0010)
+    " 25=  10(0101)xx
     if(0xE2==char2nr(@t[0])&&0x25==char2nr(@t[1])/4)
       let u=char2nr(@t[1])%4*64+char2nr(@t[2])%64
+      " u is lower byte of unicode number
       let c='0x'.strpart(s:i_utf8,2*u,2)
+      " c is connection code
       "echo 'd='.a:d.' m='.a:m.' c='.c.' u='.u
       retu c%a:m*4/a:m 
     en
   en
+endf
+
+" 3*4^x, where x=0,1,2,3
+" fu! s:Mask(x)
+"   retu ((6+a:x*(45+a:x*(-54+a:x*27)))/2)
+" endf
+
+" Move cursor (follow) in specified direction
+" Return new direction if new position is valid, -1 otherwise
+" dir: 'kljh'
+"       ^>V<
+"       0123
+" mask: 3 12 48 192      
+" let @x=3|echo (6+@x*(45+@x*(-54+@x*27)))/2
+"
+fu! <SID>F(d)
+  exe 'norm '.('kljh'[a:d]).'"tyl'
+  if(0xE2==char2nr(@t[0])&&0x25==char2nr(@t[1])/4)
+    let u=char2nr(@t[1])%4*64+char2nr(@t[2])%64
+    " u is lower byte of unicode number
+    let c='0x'.strpart(s:i_utf8,2*u,2)
+    " c is connection code
+  else
+    retu -1
+  en
+  let i=0
+  let r=-1
+  while i<4
+    if 0!=c%4 && a:d!=(i+2)%4
+      if r<0
+        let r=i
+      else
+        retu -1
+      endif
+    endif
+    let c=c/4
+    let i=i+1
+  endw
+  retu r
+endf
+
+fu! <SID>G(d)
+  let y=line(".")
+  let x=virtcol(".")
+  let n=a:d
+  while n>=0
+    let n=s:F(n) 
+    if y==line(".") && x==virtcol(".") 
+      echo "Returned to same spot"
+      break
+    endif
+  endw
 endf
 
 " Move cursor in specified direction (d= h,j,k or l). Mask s for
@@ -90,18 +161,20 @@ fu! <SID>M(s,d)
 "  "echo "Boxdrawing mode"
 endf
 
-fu! s:ToAscii()
-  exe expand("normal <esc>")
-  echo "Hello"
-"  exe "normal :s/[<C-V>u2500]/-/g"
-  exec "normal gv:s/[<C-V>u2550]/-/g<CR>"
-" normal gv:s/[<C-V>u2502<C-V>u2551]/<bar>g<CR>
-" normal gv:s/[<C-V>u250c<C-V>u252c<C-V>u2510<C-V>u251c<C-V>u253c<C-V>u2524<C-V>u2514<C-V>u2534<C-V>u2518]/+/g<CR>
-" normal gv:s/[<C-V>u2554<C-V>u2566<C-V>u2557<C-V>u2560<C-V>u256c<C-V>u2563<C-V>u255a<C-V>u2569<C-V>u255d]/#/g<CR>
-" normal gv:s/[<C-V>u2552<C-V>u2564<C-V>u2555<C-V>u255e<C-V>u256a<C-V>u2561<C-V>u2558<C-V>u2567<C-V>u255b<C-V>u2553<C-V>u2565<C-V>u2556<C-V>u255f<C-V>u256b<C-V>u2562<C-V>u2559<C-V>u2568<C-V>u255c]/+/g<CR>
-endf
+scriptencoding utf8
+command! -range ToAscii :silent <line1>,<line2>s/┌\|┬\|┐\|╓\|╥\|╖\|╒\|╤\|╕\|╔\|╦\|╗\|├\|┼\|┤\|╟\|╫\|╢\|╞\|╪\|╡\|╠\|╬\|╣\|└\|┴\|┘\|╙\|╨\|╜\|╘\|╧\|╛\|╚\|╩\|╝/+/ge|:silent <line1>,<line2>s/[│║]/\|/ge|:silent <line1>,<line2>s/[═─]/-/ge
 
-vmap ,a :call <SID>ToAscii()<CR>
+command! -range ToHorz :<line1>,<line2>s/─\|═/-/g
+command! -range ToHorz2 :<line1>,<line2>s/─/-/g
+" 0000000: 636f 6d6d 616e 6421 202d 7261 6e67 6520  command! -range 
+" 0000010: 546f 486f 727a 203a 3c6c 696e 6531 3e2c  ToHorz :<line1>,
+" 0000020: 3c6c 696e 6532 3e73 2fe2 9480 5c7c e295  <line2>s/...\|..
+" 0000030: 9029 2f6f 2f67 0d0a                      .)/o/g..
+command! -range ToVert :<line1>,<line2>s/│\|║/\|/g
+
+scriptencoding
+
+vmap ,a :ToAscii<cr>
 
 " sideeffect: stores contents of a block in "y 
 " 1<C-V> does not work good in 6.0 when multibyte characters are involved
@@ -110,7 +183,7 @@ vmap ,a :call <SID>ToAscii()<CR>
 fu! s:MB(d)
   let l:y1=line(".")
   let l:x1=virtcol(".")
-  " echo l:x1."-".l:y1
+  "echo l:x1."-".l:y1
   normal gv"yygvo
   let l:y2=line(".")
   let l:x2=virtcol(".")
@@ -130,6 +203,4 @@ endf
 " If undesirable, prepend with :nmap ,b
 "
 :call <SID>S()
-
-
 
