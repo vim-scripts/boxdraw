@@ -1,0 +1,45 @@
+Summary
+-------
+Draw diagrams and tables using "real box drawing characters" (AKA ANSI art).
+
+Detailed description
+--------------------
+This scripts facilitates drawing simple 'ANSI' graphic containing box drawing
+characters (not just '+', '-' and '|', but REAL box drawing characters).
+It can be useful to draw diagrams and fancy tables (at least, I use it this
+way).
+
+Upon sourcing script defines several macros:
+
+<shift-arrow> -- moves cursor in specified direction leaving trail of box
+drawing characters, making all joins and crossings
+,e -- ends box drawing mode (unmap shift+arrows macros and restore virtualedit
+value)
+,b -- restarts box drawing (map shift+arrows macros and set virtual edit=all)
+,s -- selects 'single-line' boxdrawing characters
+,d -- selects 'double-line' boxdrawing characters
+
+Currently box drawing is supported only in utf8 mode. However, script does not
+use any "weird" box drawing characters from unicode set that are not present
+in, say, cp437. So, it is safe to save it in any single byte encoding that
+contains regular single box drawing characters.
+
+Plans:
+I plan to support also single byte encoding directly and I also plan to 
+support double boxes in a cleaner way.
+
+Installation
+------------
+Copy boxdraw.vim to the place where you normally keep vim scripts (e.g. ~/.vim
+or c:\vim\vimfiles) and source it every time you want to draw a diagram or nice
+table.
+
+You may wish also to add this to your menu by adding a line to your .gvimrc
+(_gvimrc) file (use actual path to boxdraw.vim):
+:menu Tools.Bo&x\ Draw :so ~/.vim/boxdraw.vim<CR>
+
+History
+-------
+2002-01-09 -- v0.0 -- initial upload, single boxes in utf-8 encoding
+2002-01-10 -- v0.1 -- double boxes
+
