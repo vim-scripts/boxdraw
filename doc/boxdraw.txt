@@ -1,7 +1,7 @@
 Summary
 -------
 Draw diagrams and tables using "real box drawing characters" (AKA ANSI
-art).
+art). Trace box-drawing typeset diagrams -- follow the lines, etc.
 
 Detailed description
 --------------------
@@ -32,22 +32,34 @@ When rectangular block is selected, it can be moved around using
 characters and rectangular blocks do not live together too good, so this
 feature is experimental.
 
-Currently box drawing is supported for utf8 encoding.
-There is version for single-byte encoding (located in bd-single.vim)
-but it hasn't been updated for several years.
+Currently box drawing is supported for utf8 and cp437 (DOS) encodings.
 
-Script for utf-8 (boxdraw.vim) does not use any "weird" box drawing
-characters from unicode set that are not present in, say, cp437. So, it
-is safe to save utf-8 file in any single byte encoding that contains
-regular single box drawing characters.
+Script does not use any "weird" box drawing characters from unicode set
+that are not present in, say, cp437. So, it is safe to save utf-8 file
+in any single byte encoding that contains regular single box drawing
+characters.
 This script also contains mapping that converts all boxdrawing
 characters in current selection into ascii '+', '-', '|'.
 
-Script for single-byte encodings (bd-single) assumes that boxdrawing
-characters are located in the same places as in cp437 (cp866, .... etc.)
-codepage. If you want to use it with encoding that contains such
+If vim encoding is single byte, this script assumes cp437 (DOS). Most
+encodings have boxdrawing characters at the same place, however, some
+(notably, koi8-r) have them in different code postions.
+If you want to use it with encoding that contains such
 characters in diferent place, please drop me a note -- I will be happy
 to add support for that codepage too.
+
+To help you determine which boxdrawing characters are suppored by your
+terminal I have included file sampler.txt. Just type it (or cat it) on
+the termianal and encoding that labels the block that looks "right" will
+be your supported encoding.
+
+Note for PuTTY users
+--------------------
+
+It turns out that PuTTY does not translate Shift+Arrow combination into
+X key code (like xterm does), so mappings will not work for this
+terminal. I have modified initialization script to use <arrows> instead
+of <shift>+<arrows> in Unix environment.
 
 Perl scripts
 ------------
@@ -131,3 +143,5 @@ History
 2002-01-30 -- v0.2 -- single-byte, box->ascii conversion
 2003-11-24 -- v0.3 -- perl scripts + some rectangular block movements
 2004-06-18 -- v0.4 -- following the lines, updated perl scripts
+2004-11-26 -- v1.0 -- combined single-byte and utf8 versions, included
+sampler.txt to help determine encoding

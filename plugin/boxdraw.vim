@@ -9,35 +9,60 @@
 " 2002-01-30 -- ,a mapping (box->ascii conversion)
 " 2003-11-10 -- implemented MB avoiding "number Ctl-V"
 " 2004-06-18 -- fixed ToAscii so it replaces "─"; trace path (g+arrow)
+" 2004-06-23 -- merged single-byte and utf-8 support in one file
+" 2004-06-30 -- do not use shift+arrows unless in win32
 
 
 let s:o_utf8='--0251--001459--50585a----------0202----0c1c----525e------------51--51--53--5f--54--60------------------------------------------00185c--003468------------------1024----2c3c--------------------56--62--65--6b--------------------------------------------------505b5d----------506769----------5561------------646a------------57--63----------66--6c------------------------------------------------------------------01'
 let s:i_utf8='44cc11------------------14------50------05------41------15--------------51--------------54--------------45--------------55--------------------------------------88221824289060a009060a81428219262a9162a29864a889468a9966aa14504105------40010410'
+let s:o_cp437='--b3ba--c4c0d3--cdd4c8----------b3b3----dac3----d5c6------------ba--ba--d6--c7--c9--cc------------------------------------------c4d9bd--c4c1d0------------------bfb4----c2c5--------------------b7--b6--d2--d7--------------------------------------------------cdbebc----------cdcfca----------b8b5------------d1d8------------bb--b9----------cb--ce'
+let s:i_cp437='----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------115191626090a222a08242815005455415445519260a288aa82a88aa894698640609182466994114'
 
 "
 " Activate mode. Assigned to ,b macro.
 "
 fu! <SID>S()
   if has("gui_running")
-    se enc=utf8
+    " se enc=utf8
   en
   let s:ve=&ve
   setl ve=all
-  nm <S-Up> :call <SID>M(1,'k')<CR>
-  nm <S-Down> :call <SID>M(16,'j')<CR>
-  nm <S-Left> :call <SID>M(64,'h')<CR>
-  nm <S-Right> :call <SID>M(4,'l')<CR>
-  nm g<Up> :call <SID>G(0)<CR>
-  nm g<Right> :call <SID>G(1)<CR>
-  nm g<Down> :call <SID>G(2)<CR>
-  nm g<Left> :call <SID>G(3)<CR>
-  vm <S-Up>     <esc>:call <SID>MB('k')<CR>
-  vm <S-Down>   <esc>:call <SID>MB('j')<CR>
-  vm <S-Left>   <esc>:call <SID>MB('h')<CR>
-  vm <S-Right>  <esc>:call <SID>MB('l')<CR>
+  " Note that typical terminal emulator program does not support Shift arrows
+  " too good. You will, probably, have to redefines those to, say, 
+  " ,<Up> etc.
+  if has("win32")
+    " Under Windows Shift+Arrows works quite smooth, unlike most terminals
+    nm <S-Up> :call <SID>M(1,'k')<CR>
+    nm <S-Down> :call <SID>M(16,'j')<CR>
+    nm <S-Left> :call <SID>M(64,'h')<CR>
+    nm <S-Right> :call <SID>M(4,'l')<CR>
+    nm g<Up> :call <SID>G(0)<CR>
+    nm g<Right> :call <SID>G(1)<CR>
+    nm g<Down> :call <SID>G(2)<CR>
+    nm g<Left> :call <SID>G(3)<CR>
+    vm <S-Up>     <esc>:call <SID>MB('k')<CR>
+    vm <S-Down>   <esc>:call <SID>MB('j')<CR>
+    vm <S-Left>   <esc>:call <SID>MB('h')<CR>
+    vm <S-Right>  <esc>:call <SID>MB('l')<CR>
+  else
+    nm <Up> :call <SID>M(1,'k')<CR>
+    nm <Down> :call <SID>M(16,'j')<CR>
+    nm <Left> :call <SID>M(64,'h')<CR>
+    nm <Right> :call <SID>M(4,'l')<CR>
+    nm g<Up> :call <SID>G(0)<CR>
+    nm g<Right> :call <SID>G(1)<CR>
+    nm g<Down> :call <SID>G(2)<CR>
+    nm g<Left> :call <SID>G(3)<CR>
+    vm <Up>     <esc>:call <SID>MB('k')<CR>
+    vm <Down>   <esc>:call <SID>MB('j')<CR>
+    vm <Left>   <esc>:call <SID>MB('h')<CR>
+    vm <Right>  <esc>:call <SID>MB('l')<CR>
+  en
+  vmap ,a :ToAscii<cr>
   nm ,e :call <SID>E()<CR>
   nm ,s :call <SID>SetLT(1)<CR>
   nm ,d :call <SID>SetLT(2)<CR>
+  cabbr <buffer> perl perl c:\data\nsg\p\boxdraw\<C-R>
   let s:bdlt=1
   nm ,b x
   nun ,b
@@ -50,23 +75,54 @@ endf
 " Deactivate mode.
 " Unmap macros, restore &ve option
 fu! <SID>E()
-  nun <S-Up>
-  nun <S-Down>
-  nun <S-Left>
-  nun <S-Right>
-  nun g<Up>
-  nun g<Right>
-  nun g<Down>
-  nun g<Left>
-  vu <S-Up>
-  vu <S-Down>
-  vu <S-Left>
-  vu <S-Right>
+  if has("win32")
+    " Under Windows Shift+Arrows works quite smooth, unlike most terminals
+    nun <S-Up>
+    nun <S-Down>
+    nun <S-Left>
+    nun <S-Right>
+    nun g<Up>
+    nun g<Right>
+    nun g<Down>
+    nun g<Left>
+    vu <S-Up>
+    vu <S-Down>
+    vu <S-Left>
+    vu <S-Right>
+  else
+    nun <Up>
+    nun <Down>
+    nun <Left>
+    nun <Right>
+    nun g<Up>
+    nun g<Right>
+    nun g<Down>
+    nun g<Left>
+    vu <Up>
+    vu <Down>
+    vu <Left>
+    vu <Right>
+  en
   nun ,e
-  nm ,b :call <SID>S()<CR>
+  nm <buffer> ,b :call <SID>S()<CR>
+  cuna <buffer> perl
   let &ve=s:ve
   unlet s:ve
   "echo "Finished Boxdrawing mode"
+endf
+
+fu! s:GetBoxCode(char)
+  " check if symbol from unicode boxdrawing range
+  " E2=1110(0010)
+  " 25=  10(0101)xx
+  if 'utf-8'== &enc
+    if(0xE2==char2nr(a:char[0])&&0x25==char2nr(a:char[1])/4)
+      retu '0x'.strpart(s:i_utf8,2*(char2nr(a:char[1])%4*64+char2nr(a:char[2])%64),2)
+    en
+  else " Assume cp437 encoding
+    retu '0x'.strpart(s:i_cp437,2*char2nr(a:char),2)
+  en
+  retu 0
 endf
 
 " Try neihgbour in direction 'd' if c is true. Mask m for the direction
@@ -79,18 +135,10 @@ endf
 fu! s:T(c,d,m)
   if(a:c)
     exe 'norm mt'.a:d.'"tyl`t'
-    " check if symbol from unicode boxdrawing range
-    " E2=1110(0010)
-    " 25=  10(0101)xx
-    if(0xE2==char2nr(@t[0])&&0x25==char2nr(@t[1])/4)
-      let u=char2nr(@t[1])%4*64+char2nr(@t[2])%64
-      " u is lower byte of unicode number
-      let c='0x'.strpart(s:i_utf8,2*u,2)
-      " c is connection code
-      "echo 'd='.a:d.' m='.a:m.' c='.c.' u='.u
-      retu c%a:m*4/a:m 
-    en
+    let c=s:GetBoxCode(@t)
+    retu c%a:m*4/a:m 
   en
+  retu 0
 endf
 
 " 3*4^x, where x=0,1,2,3
@@ -108,14 +156,7 @@ endf
 "
 fu! <SID>F(d)
   exe 'norm '.('kljh'[a:d]).'"tyl'
-  if(0xE2==char2nr(@t[0])&&0x25==char2nr(@t[1])/4)
-    let u=char2nr(@t[1])%4*64+char2nr(@t[2])%64
-    " u is lower byte of unicode number
-    let c='0x'.strpart(s:i_utf8,2*u,2)
-    " c is connection code
-  else
-    retu -1
-  en
+  let c=s:GetBoxCode(@t)
   let i=0
   let r=-1
   while i<4
@@ -154,11 +195,18 @@ fu! <SID>M(s,d)
   let @t=t
   let c=a:s*s:bdlt+x-x%(a:s*4)/a:s*a:s
   "echo 'need c='.c.' x='.x
-  let o=strpart(s:o_utf8,2*c,2)
-  if o!='--' && o!='' 
-    exe "norm r\<C-V>u25".o.a:d
+  if 'utf-8'==&enc
+    let o=strpart(s:o_utf8,2*c,2)
+    if o!='--' && o!='' 
+      exe "norm r\<C-V>u25".o.a:d
+    en
+  else
+    let o=strpart(s:o_cp437,2*c,2)
+    if o!='--' && o!='' 
+      exe "norm r\<C-V>x".o.a:d
+    en
   en
-"  "echo "Boxdrawing mode"
+"  "echo "Boxdrawing mode" 
 endf
 
 scriptencoding utf8
@@ -172,15 +220,16 @@ command! -range ToHorz2 :<line1>,<line2>s/─/-/g
 " 0000030: 9029 2f6f 2f67 0d0a                      .)/o/g..
 command! -range ToVert :<line1>,<line2>s/│\|║/\|/g
 
-scriptencoding
-
-vmap ,a :ToAscii<cr>
 
 " sideeffect: stores contents of a block in "y 
 " 1<C-V> does not work good in 6.0 when multibyte characters are involved
 " gvp does not work good ...
 " gv also has some problems
 fu! s:MB(d)
+  " It seems that rectangular boxes and multibyte do not live together too
+  " good asof version 6.3
+  " Normally something like
+  " exe 'norm gv"yygvr '.a:d.'1<C-V>"ypgv' 
   let l:y1=line(".")
   let l:x1=virtcol(".")
   "echo l:x1."-".l:y1
@@ -194,13 +243,15 @@ fu! s:MB(d)
   let l:size=""
   if 0<l:y2-l:y1 | let l:size=l:size.(l:y2-l:y1)."j" | endif
   if 0<l:x2-l:x1 | let l:size=l:size.(l:x2-l:x1)."l" | endif
-  " echo l:x1."-".l:x2."  ".l:y1."-".l:y2." ".l:pos." ".l:size
-  " echo "normal gvr-".l:pos.a:d."".l:size."\"ypgv"
   exe "normal gvr ".l:pos.a:d."".l:size."d\"yPgvjk"
 endf
 
-" Upon start activate boxdrwaing mode.
-" If undesirable, prepend with :nmap ,b
-"
-:call <SID>S()
 
+:nmap <buffer> ,b :call <SID>S()<CR>
+if has("win32")
+  " Under win32 activate boxdrwaing mode upon start.
+  " If undesirable, prepend with :nmap ,b
+  "
+  :normal ,b
+else
+en

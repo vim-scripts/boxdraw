@@ -3,6 +3,7 @@
 # 2003-11-24 10:12:22 created by nsg
 # 2003-11-25 13:16:17 renamed and small fix in "intelligence"
 # 2004-06-18 14:18:11 boxsets
+# 2004-06-21 21:41:30 hex input codes
 use strict;
 use utf8;
 use 5.8.0;
@@ -10,9 +11,13 @@ use Getopt::Std;
 
 our (
   $opt_s, # boxset 's', 'd', 'v' or 'h'
+  $opt_x, # convert hex digits into appropriate bd characters
+  $opt_t, # ternary codes ' ' .. 'p' 
 );
-getopts("s:");
+getopts("s:xt");
 $opt_s||='s';
+
+my $o_utf8='--0251--001459--50585a----------0202----0c1c----525e------------51--51--53--5f--54--60------------------------------------------00185c--003468------------------1024----2c3c--------------------56--62--65--6b--------------------------------------------------505b5d----------506769----------5561------------646a------------57--63----------66--6c------------------------------------------------------------------01';
 
 binmode (STDOUT, ":utf8");
 my %boxset=(
@@ -38,14 +43,27 @@ sub process_line
  for(my $i=0; $i<length($prev); ++$i) {
    my $code=0;
    my $c=substr($prev,$i,1);
-   if( $c=~/[-+\|]/ ) {
-     $code |= 1 if substr($pprev,$i  ,1)=~/[\|+]/ ;
-     $code |= 2 if substr($prev ,$i+1,1)=~/[-+]/ ;
-     $code |= 4 if substr($_    ,$i  ,1)=~/[\|+]/ ;
-     $code |= 8 if substr($prev ,$i-1,1)=~/[-+]/ ;
+   if( $opt_x ) {
+     $code=0;
+     $code=hex($c) if $c=~/[[:xdigit:]]/;
+   } elsif( $opt_t ) {
+     $code=0;
+     if( ord($c)>32 ) {
+       $c=ord($c)-32;
+       for(0..3){$code =($code>>2)+(($c%3)<<6); $c=int($c/3);}
+       $c=chr(hex('25'.substr($o_utf8, $code*2,2)));
+     }
+     $code=0;
+   } else {
+     if( $c=~/[-+\|]/ ) {
+       $code |= 1 if substr($pprev,$i  ,1)=~/[\|+]/ ;
+       $code |= 2 if substr($prev ,$i+1,1)=~/[-+]/ ;
+       $code |= 4 if substr($_    ,$i  ,1)=~/[\|+]/ ;
+       $code |= 8 if substr($prev ,$i-1,1)=~/[-+]/ ;
 
-     $code = 10 if $code && '-' eq $c;
-     $code = 5 if $code && '|' eq $c;
+       $code = 10 if $code && '-' eq $c;
+       $code = 5 if $code && '|' eq $c;
+     }
    }
    $out.=$code?substr($BOX,$code,1):$c;
  }
