@@ -11,12 +11,16 @@
 " 2004-06-18 -- fixed ToAscii so it replaces "─"; trace path (g+arrow)
 " 2004-06-23 -- merged single-byte and utf-8 support in one file
 " 2004-06-30 -- do not use shift+arrows unless in win32
+" 2008-12-17 -- special processing for line-block movements, changed cabbr for
+" perl
 
 
 let s:o_utf8='--0251--001459--50585a----------0202----0c1c----525e------------51--51--53--5f--54--60------------------------------------------00185c--003468------------------1024----2c3c--------------------56--62--65--6b--------------------------------------------------505b5d----------506769----------5561------------646a------------57--63----------66--6c------------------------------------------------------------------01'
 let s:i_utf8='44cc11------------------14------50------05------41------15--------------51--------------54--------------45--------------55--------------------------------------88221824289060a009060a81428219262a9162a29864a889468a9966aa14504105------40010410'
 let s:o_cp437='--b3ba--c4c0d3--cdd4c8----------b3b3----dac3----d5c6------------ba--ba--d6--c7--c9--cc------------------------------------------c4d9bd--c4c1d0------------------bfb4----c2c5--------------------b7--b6--d2--d7--------------------------------------------------cdbebc----------cdcfca----------b8b5------------d1d8------------bb--b9----------cb--ce'
 let s:i_cp437='----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------115191626090a222a08242815005455415445519260a288aa82a88aa894698640609182466994114'
+
+let s:scriptfile=expand("<sfile>:h") 
 
 "
 " Activate mode. Assigned to ,b macro.
@@ -27,8 +31,9 @@ fu! <SID>S()
   en
   let s:ve=&ve
   setl ve=all
-  " Note that typical terminal emulator program does not support Shift arrows
-  " too good. You will, probably, have to redefines those to, say, 
+  " Note that typical terminal emulator program (Putty, in particular) does
+  " not support Shift arrows too good. You will, probably, have to redefines
+  " those to, say, 
   " ,<Up> etc.
   if has("win32")
     " Under Windows Shift+Arrows works quite smooth, unlike most terminals
@@ -58,14 +63,15 @@ fu! <SID>S()
     vm <Left>   <esc>:call <SID>MB('h')<CR>
     vm <Right>  <esc>:call <SID>MB('l')<CR>
   en
-  vmap ,a :ToAscii<cr>
-  nm ,e :call <SID>E()<CR>
-  nm ,s :call <SID>SetLT(1)<CR>
-  nm ,d :call <SID>SetLT(2)<CR>
-  cabbr <buffer> perl perl c:\data\nsg\p\boxdraw\<C-R>
+  vmap <Leader>a :ToAscii<cr>
+  nm <Leader>e :call <SID>E()<CR>
+  nm <Leader>s :call <SID>SetLT(1)<CR>
+  nm <Leader>d :call <SID>SetLT(2)<CR>
+  exec "cabbr <"."buffer> perl perl ".s:scriptfile
+
   let s:bdlt=1
-  nm ,b x
-  nun ,b
+  nm <Leader>b x
+  nun <Leader>b
 endf
 
 fu! s:SetLT(thickness)
@@ -103,8 +109,8 @@ fu! <SID>E()
     vu <Left>
     vu <Right>
   en
-  nun ,e
-  nm <buffer> ,b :call <SID>S()<CR>
+  nun <Leader>e
+  nm <buffer> <Leader>b :call <SID>S()<CR>
   cuna <buffer> perl
   let &ve=s:ve
   unlet s:ve
@@ -220,16 +226,44 @@ command! -range ToHorz2 :<line1>,<line2>s/─/-/g
 " 0000030: 9029 2f6f 2f67 0d0a                      .)/o/g..
 command! -range ToVert :<line1>,<line2>s/│\|║/\|/g
 
+" Move block dispatch
+fu! s:MB(d)
+  if visualmode()=='' || visualmode()=='v'
+    call s:MRB(a:d)
+  elseif visualmode()=='V'
+    call s:MLB(a:d)
+  en
+endf
 
+" Move line block
+fu! s:MLB(d)
+  if a:d=='j' || a:d=='k'
+    let l:cmd= "norm gv\"yd".a:d."\"yP1V"
+    exe l:cmd
+  elseif a:d=='h'
+    normal gv
+    :'<,'>s/^.//
+    normal gv
+  elseif a:d=='l'
+    normal gv
+    :'<,'>s/^/ /
+    normal gv
+  en
+endf
+
+" Move Rectangular block
 " sideeffect: stores contents of a block in "y 
 " 1<C-V> does not work good in 6.0 when multibyte characters are involved
 " gvp does not work good ...
 " gv also has some problems
-fu! s:MB(d)
+" See http://vim.sourceforge.net/tips/tip.php?tip_id=808 for different way to
+" paste
+fu! s:MRB(d)
   " It seems that rectangular boxes and multibyte do not live together too
   " good asof version 6.3
   " Normally something like
-  " exe 'norm gv"yygvr '.a:d.'1<C-V>"ypgv' 
+  " exe 'norm gv"yygvr '.a:d.'1<C-V>"ypgv'
+  " should have worked
   let l:y1=line(".")
   let l:x1=virtcol(".")
   "echo l:x1."-".l:y1

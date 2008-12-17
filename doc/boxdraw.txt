@@ -1,7 +1,9 @@
 Summary
 -------
-Draw diagrams and tables using "real box drawing characters" (AKA ANSI
-art). Trace box-drawing typeset diagrams -- follow the lines, etc.
+ * Draw diagrams and tables using "real box drawing characters" (AKA ANSI
+art).
+ * Move rectangular/linear blocks of text around.
+ * Trace box-drawing typeset diagrams -- follow the lines, etc.
 
 Detailed description
 --------------------
@@ -18,19 +20,24 @@ g+<arrow> -- follow line of boxdrawing characters until it reaches
 intersection or ends.
 <shift+arrow> in visual mode -- move selected rectangular block in
 specified direction.
-,e -- ends box drawing mode (unmap shift+arrows macros and restore
+\e -- ends box drawing mode (unmap shift+arrows macros and restore
 virtualedit value)
-,b -- restarts box drawing (map shift+arrows macros and set virtual
+\b -- restarts box drawing (map shift+arrows macros and set virtual
       edit=all)
-,s -- selects 'single-line' boxdrawing characters
-,d -- selects 'double-line' boxdrawing characters
-,a -- convert all characters in selection into ascii '+', '-', '|' (utf8
+\s -- selects 'single-line' boxdrawing characters
+\d -- selects 'double-line' boxdrawing characters
+\a -- convert all characters in selection into ascii '+', '-', '|' (utf8
       only, not implemented)
+("\" prefix may be changed by changing mapleader variable, see :h mapleader)
 
 When rectangular block is selected, it can be moved around using
 <shift-arrow> keys. Unfortunately, as of version 6.1 multibyte
 characters and rectangular blocks do not live together too good, so this
 feature is experimental.
+
+When line block is selected, <shift-up> and <shift-down> moves it up or down
+nondestructively, <shift-left> decreases indent and <shift-up> increases
+indent.
 
 Currently box drawing is supported for utf8 and cp437 (DOS) encodings.
 
@@ -81,25 +88,34 @@ outline.pl -- outlines groups of similar characters in the input with
   boxdrawing characters. Option -d makes output twice as wide, options
   -s* select boxdrawing flavor as in previous script.
   For example,
-                                    ┌───┬─┐     ┌───────┬───┐
-  aaaacc   will be converted into   │┌─┬┘┌┘ or  │ ┌───┬─┘ ┌─┘
-  abbcc                             ├┴┐└┐│      ├─┴─┐ └─┐ │
-  ccbbc                             │ └┐├┘      │   └─┐ ├─┘
-  cccb                              └──┴┘       └─────┴─┘
+
+  aaaacc
+  abbcc
+  ccbbc
+  cccb
+
+will be converted into
+
+  ┌───┬─┐
+  │┌─┬┘┌┘
+  ├┴┐└┐│
+  │ └┐├┘
+  └──┴┘
+
+or
+
+  ┌───────┬───┐
+  │ ┌───┬─┘ ┌─┘
+  ├─┴─┐ └─┐ │
+  │   └─┐ ├─┘
+  └─────┴─┘
+
 
 Both scripts were tested with ActivePerl 5.6.1.
 
 Plans:
 ------
 * Support double boxes in a cleaner way.
-* Merge utf8 and single byte scripts
-
-Examples
---------
-keyboard.txt -- picture of cyrillic keyboard layout (utf8)
-keyboard-utf16le.txt -- same in utf16le encoding (notepad ready)
-resistor-network.txt -- sample schema (utf8)
-vetka.txt
 
 Installation
 ------------
@@ -145,3 +161,4 @@ History
 2004-06-18 -- v0.4 -- following the lines, updated perl scripts
 2004-11-26 -- v1.0 -- combined single-byte and utf8 versions, included
 sampler.txt to help determine encoding
+2008-12-17 -- v1.1 -- special processing for line-block movements, changed cabbr for perl
